@@ -56,12 +56,12 @@ public class BufferKnifeFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         context = getActivity();
+        initData();
         initView();
+        loadData();
     }
 
     void initView() {
-        initData();
-
         adapter = new QuickAdapter<SearchShop>(context, R.layout.recommend_shop_list_item) {
             @Override
             protected void convert(BaseAdapterHelper helper, SearchShop shop) {
@@ -71,7 +71,7 @@ public class BufferKnifeFragment extends Fragment {
             }
         };
 
-        listView.addFooterView();
+        listView.withLoadMoreView();
         listView.setAdapter(adapter);
         // 下拉刷新
         listView.setOnRefreshListener(new PullToRefreshBase.OnRefreshListener<ListView>() {
@@ -110,8 +110,6 @@ public class BufferKnifeFragment extends Fragment {
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
             }
         });
-
-        loadData();
     }
 
     private void initData() {
@@ -125,34 +123,19 @@ public class BufferKnifeFragment extends Fragment {
             return;
         }
         param.setPno(pno);
-        listView.setFooterViewTextNormal();
+        listView.setLoadMoreViewTextLoading();
         HttpClient.getRecommendShops(param, new HttpResponseHandler() {
 
             @Override
             public void onSuccess(String body) {
                 listView.onRefreshComplete();
-
                 JSONObject object = JSON.parseObject(body);
                 List<SearchShop> list = JSONArray.parseArray(object.getString("body"), SearchShop.class);
-
-                // 下拉刷新
-                if (pno == 1 && adapter.getCount() == 0) {
+                listView.updateLoadMoreViewText(list);
+                isLoadAll = list.size() < HttpClient.PAGE_SIZE;
+                if(pno == 1) {
                     adapter.clear();
                 }
-
-                // 暂无数据
-                if (pno == 1 && list.isEmpty()) {
-                    listView.setFooterViewTextNoData();
-                    return;
-                }
-
-                // 已加载全部
-                if (pno > 1 && (list.isEmpty() || list.size() < HttpClient.PAGE_SIZE)) {
-                    listView.setFooterViewTextNoMoreData();
-                    isLoadAll = true;
-                    return;
-                }
-
                 adapter.addAll(list);
                 pno++;
             }
@@ -160,7 +143,7 @@ public class BufferKnifeFragment extends Fragment {
             @Override
             public void onFailure(Request request, IOException e) {
                 listView.onRefreshComplete();
-                listView.setFooterViewTextError();
+                listView.setLoadMoreViewTextError();
             }
         });
     }

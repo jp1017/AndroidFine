@@ -1,3 +1,5 @@
+[![Android Gems](http://www.android-gems.com/badge/tianshaojie/AndroidFine.svg?branch=master)](http://www.android-gems.com/lib/tianshaojie/AndroidFine)
+
 # AndroidFine，Android快速开发框架
 
 ## UI组件，不止是简单整合，更易用
@@ -15,7 +17,7 @@
 * HttpClient集成了OkHttpClient，基本的get，post，方便扩展和整合
 * Picasso.with(context).load("url).into(imageView)，舒服且强大的图片加载
 * 各种utils，拿来就可以用
-* [Android编码规范](http://tianshaojie.github.io/android-code-style)，简单才能规范
+* [Android编码规范](http://tianshaojie.github.io/android-code-style)，简单才能规范(已更新，更合理，欢迎建议)
 
 
 ## 精致Demo
@@ -36,5 +38,7 @@
 
 [Download AndroidFine.apk](http://files.cnblogs.com/files/purediy/AndroidFine.apk)
 
+## 捐赠
 
+![](https://tfsimg.alipay.com/images/mobilecodec/T16gVjXXRiXXXXXXXX)
 

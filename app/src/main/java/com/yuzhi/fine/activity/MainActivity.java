@@ -1,7 +1,6 @@
 
 package com.yuzhi.fine.activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -15,80 +14,109 @@ import com.yuzhi.fine.fragment.MainPagerFragment;
 import com.yuzhi.fine.fragment.MemberFragment;
 import com.yuzhi.fine.ui.UIHelper;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity extends BaseFragmentActivity {
 
-    private static int currSel = 0;
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String FRAGMENT_TAGS = "fragmentTags";
+    private static final String CURR_INDEX = "currIndex";
+    private static int currIndex = 0;
 
     private RadioGroup group;
 
-    private Fragment homeFragment = new MainPagerFragment();
-    private Fragment imFragment = new BufferKnifeFragment();
-    private Fragment interestFragment = new BufferKnifeFragment();
-    private Fragment memberFragment = new MemberFragment();
-    private List<Fragment> fragmentList = Arrays.asList(homeFragment, imFragment, interestFragment, memberFragment);
-
+    private ArrayList<String> fragmentTags;
     private FragmentManager fragmentManager;
 
     @Override
-    protected void onCreate(Bundle bundle) {
-        super.onCreate(bundle);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         fragmentManager = getSupportFragmentManager();
-        initFootBar();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Fragment fragment = fragmentList.get(currSel);
-        if (fragment != null) {
-            fragment.onActivityResult(requestCode, resultCode, data);
+        if (savedInstanceState == null) {
+            initData();
+            initView();
+        } else {
+            initFromSavedInstantsState(savedInstanceState);
         }
     }
 
-    private void initFootBar() {
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(CURR_INDEX, currIndex);
+        outState.putStringArrayList(FRAGMENT_TAGS, fragmentTags);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        initFromSavedInstantsState(savedInstanceState);
+    }
+
+    private void initFromSavedInstantsState(Bundle savedInstanceState) {
+        currIndex = savedInstanceState.getInt(CURR_INDEX);
+        fragmentTags = savedInstanceState.getStringArrayList(FRAGMENT_TAGS);
+        showFragment();
+    }
+
+    private void initData() {
+        currIndex = 0;
+        fragmentTags = new ArrayList<>(Arrays.asList("HomeFragment", "ImFragment", "InterestFragment", "MemberFragment"));
+    }
+
+    private void initView() {
         group = (RadioGroup) findViewById(R.id.group);
         group.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 switch (checkedId) {
-                    case R.id.foot_bar_home: currSel = 0; break;
-                    case R.id.foot_bar_im: currSel = 1; break;
-                    case R.id.foot_bar_interest: currSel = 2; break;
-                    case R.id.main_footbar_user: currSel = 3; break;
+                    case R.id.foot_bar_home: currIndex = 0; break;
+                    case R.id.foot_bar_im: currIndex = 1; break;
+                    case R.id.foot_bar_interest: currIndex = 2; break;
+                    case R.id.main_footbar_user: currIndex = 3; break;
+                    default: break;
                 }
-                addFragmentToStack(currSel);
-                if(currSel == 3) {
-                    UIHelper.showLogin(MainActivity.this);
-                }
+                showFragment();
             }
         });
-        addFragmentToStack(0);
+        showFragment();
     }
 
-    private void addFragmentToStack(int cur) {
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        Fragment fragment = fragmentList.get(cur);
-        if (!fragment.isAdded()) {
-            fragmentTransaction.add(R.id.fragment_container, fragment);
+    private void showFragment() {
+        if (currIndex == 3) {
+            UIHelper.showLogin(MainActivity.this);
         }
-        for (int i = 0; i < fragmentList.size(); i++) {
-            Fragment f = fragmentList.get(i);
-            if (i == cur && f.isAdded()) {
-                fragmentTransaction.show(f);
-            } else if (f != null && f.isAdded() && f.isVisible()) {
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        Fragment fragment = fragmentManager.findFragmentByTag(fragmentTags.get(currIndex));
+        if(fragment == null) {
+            fragment = instantFragment(currIndex);
+        }
+        for (int i = 0; i < fragmentTags.size(); i++) {
+            Fragment f = fragmentManager.findFragmentByTag(fragmentTags.get(i));
+            if(f != null && f.isAdded()) {
                 fragmentTransaction.hide(f);
             }
         }
+        if (fragment.isAdded()) {
+            fragmentTransaction.show(fragment);
+        } else {
+            fragmentTransaction.add(R.id.fragment_container, fragment, fragmentTags.get(currIndex));
+        }
         fragmentTransaction.commitAllowingStateLoss();
+        fragmentManager.executePendingTransactions();
+    }
+
+    private Fragment instantFragment(int currIndex) {
+        switch (currIndex) {
+            case 0: return new MainPagerFragment();
+            case 1: return new BufferKnifeFragment();
+            case 2: return new BufferKnifeFragment();
+            case 3: return new MemberFragment();
+            default: return null;
+        }
     }
 
     @Override
